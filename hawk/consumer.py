@@ -4,7 +4,7 @@ import logging
 import aio_pika
 import ujson
 
-from settings import RABBIT_USER, RABBIT_PASSWORD, RABBIT_HOST
+from hawk.settings import RABBIT_USER, RABBIT_PASSWORD, RABBIT_HOST
 
 logger = logging.getLogger('hawk')
 
