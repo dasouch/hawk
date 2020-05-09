@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 from pytest import fixture
 
 from hawk.consumer import Consumer
+from hawk.publisher import Publisher
 
 
 class AsyncMock(MagicMock):
@@ -14,6 +15,7 @@ class AsyncMock(MagicMock):
 @fixture(autouse=True, scope='function')
 async def mocks(mocker):
     mocker.patch.object(Consumer, 'consume', new_callable=AsyncMock)
+    mocker.patch.object(Publisher, 'send_message', new_callable=AsyncMock)
     yield
 
 
