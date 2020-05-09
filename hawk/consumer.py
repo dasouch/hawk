@@ -29,5 +29,5 @@ class Consumer:
                     async with message.process(requeue=True):
                         body = ujson.loads(message.body)
                         logger.debug('consuming messages from queue', extra={'queue': queue_name, 'body': body})
-                        callback(body)
+                        await callback(body)
                         logger.debug('callback done from queue', extra={'queue': queue_name})
