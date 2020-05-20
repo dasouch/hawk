@@ -23,7 +23,7 @@ class Publisher:
     async def send_message(self, queue_name, data: Dict):
         logger.debug(f'creating send queue {queue_name}', extra=data)
 
-        channel = await self._connection.channel()
+        channel: aio_pika.Channel = await self._connection.channel()
         await channel.declare_queue(
             queue_name,
             auto_delete=False,
@@ -33,6 +33,7 @@ class Publisher:
             aio_pika.Message(body=ujson.dumps(data).encode()),
             routing_key=queue_name
         )
+        await channel.close()
         logger.debug(f'success send queue {queue_name}', extra=data)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
