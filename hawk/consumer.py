@@ -26,7 +26,7 @@ class Consumer:
             )
             async with queue.iterator() as queue_iter:
                 async for message in queue_iter:
-                    async with message.process(requeue=True):
+                    async with message.process():
                         body = ujson.loads(message.body)
                         logger.debug('consuming messages from queue', extra={'queue': queue_name, 'body': body})
                         await callback(body)

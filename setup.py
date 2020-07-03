@@ -2,21 +2,21 @@ from setuptools import setup
 
 
 install_requires = [
-    'aio-pika==6.1.2',
-    'ujson==2.0.3'
+    'aio-pika==6.6.1',
+    'ujson==3.0.0'
 ]
 
 
 test_require = [
-    'pytest==5.4.2',
-    'pytest-asyncio==0.12.0',
-    'pytest-cov==2.8.1',
-    'pytest-mock==3.1.0'
+    'pytest==5.4.3',
+    'pytest-asyncio==0.14.0',
+    'pytest-cov==2.10.0',
+    'pytest-mock==3.1.1'
 ]
 
 setup(
     name='hawk',
-    version='1.0.3',
+    version='1.0.4',
     packages=['hawk'],
     install_requires=install_requires,
     author='Danilo Vargas',
