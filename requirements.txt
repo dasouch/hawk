@@ -1,2 +1,2 @@
-aio-pika==6.6.1
+aio-pika==5.6.0
 ujson==3.0.0
