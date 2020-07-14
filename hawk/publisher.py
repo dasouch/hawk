@@ -33,7 +33,6 @@ class Publisher:
             aio_pika.Message(body=ujson.dumps(data).encode()),
             routing_key=queue_name
         )
-        await channel.close()
         logger.debug(f'success send queue {queue_name}', extra=data)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
