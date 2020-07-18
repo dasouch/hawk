@@ -8,4 +8,5 @@ async def test_consumer_success(event_loop):
     async def test(data):
         pass
 
-    await Consumer.consume('test_queue', callback=test)
+    async with Consumer() as consumer:
+        await consumer.consume('test_queue', callback=test)
