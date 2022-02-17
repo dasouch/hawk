@@ -4,7 +4,7 @@ import logging
 import aio_pika
 import ujson
 
-from hawk.settings import RABBIT_USER, RABBIT_PASSWORD, RABBIT_HOST
+from hawk.settings import RABBIT_USER, RABBIT_PASSWORD, RABBIT_HOST, RABBIT_VIRTUAL_HOST
 
 logger = logging.getLogger('hawk')
 
@@ -17,7 +17,8 @@ class Consumer:
     async def __aenter__(self):
         try:
             self._connection = await aio_pika.connect_robust(f"amqp://{RABBIT_USER}:{RABBIT_PASSWORD}@{RABBIT_HOST}/",
-                                                             loop=asyncio.get_event_loop(), timeout=3)
+                                                             loop=asyncio.get_event_loop(), timeout=3,
+                                                             virtualhost=RABBIT_VIRTUAL_HOST)
         except Exception as error:
             logger.debug(f'error connection with Rabbit', extra={'error': error})
         return self
