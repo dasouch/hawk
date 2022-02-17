@@ -16,9 +16,9 @@ class Consumer:
 
     async def __aenter__(self):
         try:
-            self._connection = await aio_pika.connect_robust(f"amqp://{RABBIT_USER}:{RABBIT_PASSWORD}@{RABBIT_HOST}/",
-                                                             loop=asyncio.get_event_loop(), timeout=3,
-                                                             virtualhost=RABBIT_VIRTUAL_HOST)
+            self._connection = await aio_pika.connect_robust(
+                f"amqp://{RABBIT_USER}:{RABBIT_PASSWORD}@{RABBIT_HOST}/{RABBIT_VIRTUAL_HOST}",
+                loop=asyncio.get_event_loop(), timeout=3)
         except Exception as error:
             logger.debug(f'error connection with Rabbit', extra={'error': error})
         return self
