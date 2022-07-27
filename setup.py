@@ -3,7 +3,7 @@ from setuptools import setup
 
 install_requires = [
     'aio-pika==8.1.0',
-    'ujson==3.0.0'
+    'ujson==5.4.0'
 ]
 
 
