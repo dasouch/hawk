@@ -18,7 +18,7 @@ class Consumer:
         try:
             self._connection = await aio_pika.connect_robust(
                 f"amqp://{RABBIT_USER}:{RABBIT_PASSWORD}@{RABBIT_HOST}/{RABBIT_VIRTUAL_HOST}",
-                loop=asyncio.get_event_loop(), timeout=3)
+                loop=asyncio.get_event_loop())
         except Exception as error:
             logger.debug(f'error connection with Rabbit', extra={'error': error})
         return self
