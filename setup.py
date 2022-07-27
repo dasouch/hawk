@@ -2,7 +2,7 @@ from setuptools import setup
 
 
 install_requires = [
-    'aio-pika==5.6.0',
+    'aio-pika==8.1.0',
     'ujson==3.0.0'
 ]
 
@@ -16,7 +16,7 @@ test_require = [
 
 setup(
     name='hawk',
-    version='1.1.2',
+    version='1.1.3',
     packages=['hawk'],
     install_requires=install_requires,
     author='Danilo Vargas',
