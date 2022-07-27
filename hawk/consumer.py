@@ -12,33 +12,33 @@ logger = logging.getLogger('hawk')
 class Consumer:
 
     def __init__(self):
-        self._connection = None
+        self._callbacks = {}
+        self.channel = None
 
-    async def __aenter__(self):
-        try:
-            self._connection = await aio_pika.connect_robust(
-                f"amqp://{RABBIT_USER}:{RABBIT_PASSWORD}@{RABBIT_HOST}/{RABBIT_VIRTUAL_HOST}",
-                loop=asyncio.get_event_loop())
-        except Exception as error:
-            logger.debug(f'error connection with Rabbit', extra={'error': error})
-        return self
+    def add_consumer_callback(self, queue_name, callback):
+        self._callbacks[queue_name] = callback
 
-    async def consume(self, queue_name, callback):
-        if self._connection:
-            async with self._connection.channel() as channel:
-                queue = await channel.declare_queue(
-                    queue_name,
-                    auto_delete=False,
-                    durable=True
-                )
-                async with queue.iterator() as queue_iter:
-                    async for message in queue_iter:
-                        async with message.process():
-                            body = ujson.loads(message.body)
-                            logger.debug('consuming messages from queue', extra={'queue': queue_name, 'body': body})
-                            await callback(body)
-                            logger.debug('callback done from queue', extra={'queue': queue_name})
+    async def consume(self):
+        _connection = await aio_pika.connect_robust(
+            f"amqp://{RABBIT_USER}:{RABBIT_PASSWORD}@{RABBIT_HOST}/{RABBIT_VIRTUAL_HOST}")
+        async with _connection:
+            self.channel = await _connection.channel()
+            await self.channel.set_qos(prefetch_count=100)
+            tasks = []
+            for queue_name, callback in self._callbacks.items():
+                tasks.append(self._consumer(queue_name=queue_name, callback=callback))
+            await asyncio.gather(*tasks)
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self._connection:
-            await self._connection.close(None)
+    async def _consumer(self, queue_name, callback):
+        queue = await self.channel.declare_queue(
+            queue_name,
+            auto_delete=False,
+            durable=True
+        )
+        async with queue.iterator() as queue_iter:
+            async for message in queue_iter:
+                async with message.process():
+                    body = ujson.loads(message.body)
+                    logger.debug('consuming messages from queue', extra={'queue': queue_name, 'body': body})
+                    await callback(body)
+                    logger.debug('callback done from queue', extra={'queue': queue_name})
