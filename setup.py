@@ -16,7 +16,7 @@ test_require = [
 
 setup(
     name='hawk',
-    version='1.1.5',
+    version='1.1.6',
     packages=['hawk'],
     install_requires=install_requires,
     author='Danilo Vargas',
