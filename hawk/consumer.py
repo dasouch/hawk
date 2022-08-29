@@ -1,7 +1,8 @@
 import asyncio
+from typing import AnyStr
 
 import aio_pika
-from aio_pika import Channel
+from aio_pika import ExchangeType
 from aio_pika.abc import AbstractRobustConnection
 
 from hawk.settings import RABBIT_USER, RABBIT_PASSWORD, RABBIT_HOST, RABBIT_VIRTUAL_HOST
@@ -9,9 +10,10 @@ from hawk.settings import RABBIT_USER, RABBIT_PASSWORD, RABBIT_HOST, RABBIT_VIRT
 
 class Consumer:
 
-    def __init__(self):
+    def __init__(self, service: AnyStr):
         self._callbacks = {}
         self.loop = asyncio.get_event_loop()
+        self._service = service
 
     def add_consumer_callback(self, queue_name, callback):
         self._callbacks[queue_name] = callback
@@ -31,7 +33,9 @@ class Consumer:
         connection = await self.get_connection()
         channel = await connection.channel()
         await channel.set_qos(prefetch_count=1)
+        exchange = await channel.declare_exchange(self._service, ExchangeType.FANOUT)
         queue = await channel.declare_queue(queue_name, durable=True, auto_delete=False)
+        await queue.bind(exchange)
         await queue.consume(callback=callback)
         try:
             await asyncio.Future()

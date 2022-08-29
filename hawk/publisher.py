@@ -1,9 +1,10 @@
 import asyncio
 import logging
-from typing import Dict
+from typing import Dict, AnyStr
 
 import aio_pika
 import ujson
+from aio_pika import ExchangeType, Message, DeliveryMode
 
 from hawk.settings import RABBIT_USER, RABBIT_PASSWORD, RABBIT_HOST, RABBIT_VIRTUAL_HOST
 
@@ -12,8 +13,9 @@ logger = logging.getLogger('hawk')
 
 class Publisher:
 
-    def __init__(self):
+    def __init__(self, service: AnyStr):
         self._connection = None
+        self._service = service
 
     async def __aenter__(self):
         try:
@@ -28,15 +30,12 @@ class Publisher:
         logger.debug(f'creating send queue {queue_name}', extra=data)
         if self._connection:
             async with self._connection.channel() as channel:
-                await channel.declare_queue(
-                    queue_name,
-                    auto_delete=False,
-                    durable=True
+                exchange = await channel.declare_exchange(self._service, ExchangeType.FANOUT)
+                message = Message(
+                    body=ujson.dumps(data).encode(),
+                    delivery_mode=DeliveryMode.PERSISTENT,
                 )
-                await channel.default_exchange.publish(
-                    aio_pika.Message(body=ujson.dumps(data).encode()),
-                    routing_key=queue_name
-                )
+                await exchange.publish(message, routing_key=queue_name)
                 logger.debug(f'success send queue {queue_name}', extra=data)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
