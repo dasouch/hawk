@@ -14,6 +14,7 @@ class Consumer:
         self._callbacks = {}
         self.loop = asyncio.get_event_loop()
         self._service = service
+        self._channel = None
 
     def add_consumer_callback(self, queue_name, callback):
         self._callbacks[queue_name] = callback
@@ -24,20 +25,19 @@ class Consumer:
             f"amqp://{RABBIT_USER}:{RABBIT_PASSWORD}@{RABBIT_HOST}/{RABBIT_VIRTUAL_HOST}")
 
     async def consume(self):
-        tasks = []
-        for queue_name, callback in self._callbacks.items():
-            tasks.append(self._consumer(queue_name=queue_name, callback=callback))
-        await asyncio.gather(*tasks)
+        _connection = await self.get_connection()
+        async with _connection:
+            self._channel = await _connection.channel()
+            tasks = []
+            for queue_name, callback in self._callbacks.items():
+                tasks.append(self._consumer(queue_name=queue_name, callback=callback))
+            await asyncio.gather(*tasks)
 
     async def _consumer(self, queue_name, callback):
-        connection = await self.get_connection()
-        channel = await connection.channel()
-        await channel.set_qos(prefetch_count=1)
-        exchange = await channel.declare_exchange(self._service, ExchangeType.FANOUT)
-        queue = await channel.declare_queue(queue_name, durable=True, auto_delete=False)
+        exchange = await self._channel.declare_exchange(self._service, ExchangeType.FANOUT)
+        queue = await self._channel.declare_queue(queue_name, durable=True, auto_delete=False)
         await queue.bind(exchange)
-        await queue.consume(callback=callback)
-        try:
-            await asyncio.Future()
-        finally:
-            await connection.close()
+        async with queue.iterator() as queue_iter:
+            async for message in queue_iter:
+                async with message.process():
+                    await callback(ujson.loads(message.body))
