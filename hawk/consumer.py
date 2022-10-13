@@ -2,6 +2,7 @@ import asyncio
 from typing import AnyStr
 
 import aio_pika
+import ujson
 from aio_pika import ExchangeType
 from aio_pika.abc import AbstractRobustConnection
 
