@@ -1,10 +1,9 @@
 import asyncio
 import logging
-from typing import Dict, AnyStr
+from typing import Dict
 
 import aio_pika
 import ujson
-from aio_pika import ExchangeType, Message, DeliveryMode
 
 from hawk.settings import RABBIT_USER, RABBIT_PASSWORD, RABBIT_HOST, RABBIT_VIRTUAL_HOST
 
@@ -13,9 +12,8 @@ logger = logging.getLogger('hawk')
 
 class Publisher:
 
-    def __init__(self, service: AnyStr):
+    def __init__(self):
         self._connection = None
-        self._service = service
 
     async def __aenter__(self):
         try:
