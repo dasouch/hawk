@@ -30,12 +30,15 @@ class Publisher:
         logger.debug(f'creating send queue {queue_name}', extra=data)
         if self._connection:
             async with self._connection.channel() as channel:
-                exchange = await channel.declare_exchange(self._service, ExchangeType.FANOUT)
-                message = Message(
-                    body=ujson.dumps(data).encode(),
-                    delivery_mode=DeliveryMode.PERSISTENT,
+                await channel.declare_queue(
+                    queue_name,
+                    auto_delete=False,
+                    durable=True
                 )
-                await exchange.publish(message, routing_key=queue_name)
+                await channel.default_exchange.publish(
+                    aio_pika.Message(body=ujson.dumps(data).encode()),
+                    routing_key=queue_name
+                )
                 logger.debug(f'success send queue {queue_name}', extra=data)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
