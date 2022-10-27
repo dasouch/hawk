@@ -26,7 +26,6 @@ class Consumer:
         _connection = await self.get_connection()
         async with _connection:
             self._channel = await _connection.channel()
-            await self._channel.set_qos(prefetch_count=10)
             tasks = []
             for queue_name, callback in self._callbacks.items():
                 tasks.append(self._consumer(queue_name=queue_name, callback=callback))
