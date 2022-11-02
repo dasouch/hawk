@@ -28,8 +28,12 @@ class Consumer:
             self._channel = await _connection.channel()
             tasks = []
             for queue_name, callback in self._callbacks.items():
-                tasks.append(self._consumer(queue_name=queue_name, callback=callback))
-            await asyncio.gather(*tasks)
+                tasks.append(asyncio.create_task(self._consumer(queue_name=queue_name, callback=callback)))
+            try:
+                await asyncio.gather(*tasks)
+            except asyncio.CancelledError:
+                await self._channel.close()
+                await _connection.close()
 
     async def _consumer(self, queue_name, callback):
         queue = await self._channel.declare_queue(queue_name, durable=True, auto_delete=False)
