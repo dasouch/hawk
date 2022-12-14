@@ -1,8 +1,7 @@
 import asyncio
-import logging
 
 import aio_pika
-import ujson
+from aio_pika.abc import AbstractRobustConnection
 
 from hawk.settings import RABBIT_USER, RABBIT_PASSWORD, RABBIT_HOST, RABBIT_VIRTUAL_HOST
 
@@ -10,28 +9,34 @@ from hawk.settings import RABBIT_USER, RABBIT_PASSWORD, RABBIT_HOST, RABBIT_VIRT
 class Consumer:
 
     def __init__(self):
+        self._callbacks = {}
         self.loop = asyncio.get_event_loop()
         self._connection = None
-        self.logger = logging.getLogger('hawk')
+        self._channel = None
 
-    async def __aenter__(self):
+    def add_consumer_callback(self, queue_name, callback):
+        self._callbacks[queue_name] = callback
+
+    @staticmethod
+    async def get_connection() -> AbstractRobustConnection:
+        return await aio_pika.connect_robust(
+            f"amqp://{RABBIT_USER}:{RABBIT_PASSWORD}@{RABBIT_HOST}/{RABBIT_VIRTUAL_HOST}")
+
+    async def consume(self):
+        self._connection = await self.get_connection()
+        async with self._connection:
+            self._channel = await self._connection.channel()
+            await self._channel.set_qos(prefetch_count=100)
+            tasks = []
+            for queue_name, callback in self._callbacks.items():
+                tasks.append(asyncio.create_task(self._consumer(queue_name=queue_name, callback=callback)))
+            await asyncio.gather(*tasks, return_exceptions=True)
+
+    async def _consumer(self, queue_name, callback):
+        queue = await self._channel.declare_queue(queue_name, durable=True, auto_delete=False)
+        await queue.consume(callback=callback)
+
         try:
-            self._connection = await aio_pika.connect_robust(
-                f"amqp://{RABBIT_USER}:{RABBIT_PASSWORD}@{RABBIT_HOST}/{RABBIT_VIRTUAL_HOST}",
-                loop=asyncio.get_event_loop())
-        except Exception as error:
-            self.logger.error(f"error connection with Rabbit", exc_info=error)
-        return self
-
-    async def consume(self, callback, queue_name):
-        _channel = await self._connection.channel()
-        await _channel.set_qos(prefetch_count=10)
-        queue = await _channel.declare_queue(queue_name, durable=True, auto_delete=False)
-        async with queue.iterator() as queue_iter:
-            async for message in queue_iter:
-                async with message.process():
-                    await callback(ujson.loads(message.body))
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self._connection:
-            await self._connection.close(None)
+            await asyncio.Future()
+        finally:
+            await self._connection.close()
