@@ -20,6 +20,6 @@ setup(
     install_requires=install_requires,
     author='Danilo Vargas',
     dependency_links=[
-        'https://github.com/dasouch/aio-pika@master#egg=aio_pika'
+        'https://github.com/mosquito/aio-pika@master#egg=aio_pika'
     ]
 )
