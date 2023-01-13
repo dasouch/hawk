@@ -1,2 +1,2 @@
--e git+https://github.com/mosquito/aio-pika.git@master#egg=aio-pika
+aio-pika==8.3.0
 ujson==5.4.0
