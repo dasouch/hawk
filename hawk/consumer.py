@@ -30,7 +30,7 @@ class Consumer:
             tasks = []
             for queue_name, callback in self._callbacks.items():
                 tasks.append(asyncio.create_task(self._consumer(queue_name=queue_name, callback=callback)))
-            await asyncio.gather(*tasks, return_exceptions=True)
+            await asyncio.gather(*tasks)
 
     async def _consumer(self, queue_name, callback):
         queue = await self._channel.declare_queue(queue_name, durable=True, auto_delete=False)
