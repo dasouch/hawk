@@ -12,5 +12,4 @@ class QueueCallback:
 
     async def handle_message(self, message: aio_pika.IncomingMessage):
         async with message.process():
-            message = ujson.loads(message.body)
-            await self.handle(message=message)
+            await self.handle(message=ujson.loads(message.body))
