@@ -27,6 +27,7 @@ class Consumer:
         self._connection = await self.get_connection()
         async with self._connection:
             channel = await self._connection.channel()
+            await channel.set_qos(prefetch_count=30)
             for queue_name, queue_handler in self._callbacks.items():
                 queue = await channel.declare_queue(queue_name, auto_delete=False, durable=True)
                 await queue.consume(queue_handler.handle_message)
