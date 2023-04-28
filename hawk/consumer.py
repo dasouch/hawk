@@ -33,5 +33,7 @@ class Consumer:
                 queue = await channel.declare_queue(queue_name, auto_delete=False, durable=True)
                 await queue.consume(queue_handler.handle_message)
 
-            while True:
-                await asyncio.sleep(1)
+            try:
+                await asyncio.Future()
+            finally:
+                await self._connection.close()
