@@ -24,16 +24,18 @@ class Consumer:
         return await aio_pika.connect_robust(
             f"amqp://{RABBIT_USER}:{RABBIT_PASSWORD}@{RABBIT_HOST}/{RABBIT_VIRTUAL_HOST}")
 
+    @staticmethod
+    async def consume_from_queue(queue_name, queue_handler: QueueCallback, channel):
+        queue = await channel.declare_queue(queue_name, auto_delete=False, durable=True)
+        await queue.consume(queue_handler.handle_message)
+
     async def consume(self):
         self._connection = await self.get_connection()
         async with self._connection:
             channel = await self._connection.channel()
             await channel.set_qos(prefetch_count=self._prefetch_count)
-            for queue_name, queue_handler in self._callbacks.items():
-                queue = await channel.declare_queue(queue_name, auto_delete=False, durable=True)
-                await queue.consume(queue_handler.handle_message)
 
-            try:
-                await asyncio.Future()
-            finally:
-                await self._connection.close()
+            tasks = [asyncio.create_task(self.consume_from_queue(queue_name, queue_handler, channel)) for
+                     queue_name, queue_handler in self._callbacks.items()]
+
+            await asyncio.wait(tasks)
