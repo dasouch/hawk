@@ -28,6 +28,7 @@ class QueueCallback:
             async with message.process():
                 await self.handle(message=ujson.loads(message.body))
         except Exception as exc:
+            await message.reject(requeue=True)
             await self.fallback(exc)
 
     @abc.abstractmethod
