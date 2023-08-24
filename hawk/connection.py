@@ -13,10 +13,10 @@ class Connection:
 
     async def connect(self):
         if self.virtual_host:
-            self.connection = await aio_pika.connect(
+            self.connection = await aio_pika.connect_robust(
                 f"amqp://{self.user}:{self.password}@{self.host}/{self.virtual_host}")
         else:
-            self.connection = await aio_pika.connect(
+            self.connection = await aio_pika.connect_robust(
                 f"amqp://{self.user}:{self.password}@{self.host}")
 
     async def channel(self):
