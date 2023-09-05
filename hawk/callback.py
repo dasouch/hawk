@@ -25,10 +25,8 @@ class QueueCallback:
 
     async def handle_message(self, message: aio_pika.IncomingMessage):
         try:
-            async with message.process():
-                await self.handle(message=ujson.loads(message.body))
+            await self.handle(message=ujson.loads(message.body))
         except Exception as exc:
-            await message.reject(requeue=True)
             await self.fallback(exc)
 
     @abc.abstractmethod
