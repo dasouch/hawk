@@ -26,17 +26,11 @@ class Consumer:
     @staticmethod
     async def consume_from_queue(queue_handler: QueueCallback):
         async with queue_handler:
-            async with queue_handler.queue.iterator() as queue_iter:
-                async for message in queue_iter:
-                    async with message.process():
-                        await queue_handler.handle_message(message)
+            await queue_handler.queue.consume(queue_handler.handle_message)
+            await queue_handler.channel_closed_event.wait()
 
     async def consume(self) -> None:
         await self.connect()
         tasks = [asyncio.create_task(self.consume_from_queue(queue_handler)) for queue_handler in self._callbacks]
-        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
-
-        for task in pending:
-            task.cancel()
-
+        await asyncio.gather(*tasks)
         await self.close()
