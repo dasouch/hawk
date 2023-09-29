@@ -31,10 +31,7 @@ class QueueCallback:
             async with message.process():
                 await self.handle(message=ujson.loads(message.body))
         except Exception as exc:
-            await asyncio.gather(
-                message.reject(requeue=True),
-                self.fallback(exc)
-            )
+            await self.fallback(exc)
 
     @abc.abstractmethod
     async def fallback(self, exc):
