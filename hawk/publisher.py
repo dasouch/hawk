@@ -25,18 +25,18 @@ class Publisher:
 
     async def send_message(self, queue_name, data: Dict):
         logger.debug(f'creating send queue {queue_name}', extra=data)
-        if self._connection:
-            async with self._connection.channel() as channel:
-                await channel.declare_queue(
-                    queue_name,
-                    auto_delete=False,
-                    durable=True
-                )
-                await channel.default_exchange.publish(
-                    aio_pika.Message(body=ujson.dumps(data).encode()),
-                    routing_key=queue_name
-                )
-                logger.debug(f'success send queue {queue_name}', extra=data)
+        async with self._connection:
+            channel = await self._connection.channel()
+            await channel.declare_queue(
+                queue_name,
+                auto_delete=False,
+                durable=True
+            )
+            await channel.default_exchange.publish(
+                aio_pika.Message(body=ujson.dumps(data).encode()),
+                routing_key=queue_name
+            )
+            logger.debug(f'success send queue {queue_name}', extra=data)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self._connection:
